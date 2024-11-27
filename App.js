@@ -1,6 +1,7 @@
 import { StyleSheet, Text, View, TextInput, Button, ScrollView } from 'react-native';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import TaskCard from './TaskCard';
+import { getRequest } from './api/Api';
 
 export default function App() {
 
@@ -50,6 +51,20 @@ export default function App() {
     setTask(updatedTasks);  
   }
 
+  useEffect(() => {
+    const fetchData = async () => { 
+      try {
+        const resp = await getRequest();
+        setTask(resp)
+      } catch (ex) {
+        console.error(ex)
+      }
+    };
+
+    fetchData();
+  }, [])
+
+  
   return (
     <View style={styles.container}> 
       <View style={styles.box}> 
