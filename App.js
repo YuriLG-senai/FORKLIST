@@ -1,32 +1,25 @@
 import { StyleSheet, Text, View, TextInput, Button, ScrollView } from 'react-native';
 import { useState, useEffect } from 'react';
 import TaskCard from './TaskCard';
-import { getRequest } from './api/Api';
+import { getRequest, deleteRequest, postRequest } from './api/Api';
 
 export default function App() {
 
-  const [taskTitle, setTaskTitle] = useState(""); 
-  const [taskDescription, setTaskDescription] = useState(""); 
-  const [task, setTask] = useState([]); 
-  const [alert1, setAlert1] = useState(false); 
-  const [alert2, setAlert2] = useState(false); 
+  const [taskTitle, setTaskTitle] = useState("");
+  const [taskDescription, setTaskDescription] = useState("");
+  const [task, setTask] = useState([]);
+  const [alert1, setAlert1] = useState(false);
+  const [alert2, setAlert2] = useState(false);
 
-  const onMessage = () => {
+  const onMessage = async() => {
     setAlert1(false);
     setAlert2(false);
 
     if (taskTitle !== "" && taskDescription.length >= 10) {
-      setTask([
-        ...task,
-        {
-          id: task.length + 1,
-          title: taskTitle,
-          description: taskDescription
-        }
-      ]);
-
-      setTaskTitle(""); 
-      setTaskDescription(""); 
+      let newTask = await postRequest(taskTitle, taskDescription);
+      setTask(newTask);
+      setTaskTitle("");
+      setTaskDescription("");
 
     } else {
       if (!taskTitle.trim()) {
@@ -45,14 +38,15 @@ export default function App() {
     }
   }
 
-  const deleteTask = (index) => {
+  const deleteTask = (index, id) => {
     const updatedTasks = [...task];
-    updatedTasks.splice(index, 1);  
-    setTask(updatedTasks);  
-  }
+    updatedTasks.splice(index, 1);
+    deleteRequest(id);
+    setTask(updatedTasks);
+  };
 
   useEffect(() => {
-    const fetchData = async () => { 
+    const fetchData = async () => {
       try {
         const resp = await getRequest();
         setTask(resp)
@@ -64,55 +58,55 @@ export default function App() {
     fetchData();
   }, [])
 
-  
+
   return (
-    <View style={styles.container}> 
-      <View style={styles.box}> 
+    <View style={styles.container}>
+      <View style={styles.box}>
 
-        <Text style={styles.label}>Título</Text> 
+        <Text style={styles.label}>Título</Text>
 
-        <TextInput 
+        <TextInput
           style={styles.input}
           placeholder='Digite o título da tarefa...'
           value={taskTitle}
-          onChangeText={setTaskTitle} 
+          onChangeText={setTaskTitle}
         />
 
         {alert1 ? <Text style={styles.errorText}>Necessário título</Text> : null}
 
-        <Text style={styles.label}>Tarefa</Text> 
+        <Text style={styles.label}>Tarefa</Text>
 
-        <TextInput 
-          style={[styles.input, styles.textArea]} 
-          placeholder='Digite a descrição da tarefa...' 
-          value={taskDescription} 
-          onChangeText={setTaskDescription} 
+        <TextInput
+          style={[styles.input, styles.textArea]}
+          placeholder='Digite a descrição da tarefa...'
+          value={taskDescription}
+          onChangeText={setTaskDescription}
         />
 
         {alert2 ? <Text style={styles.errorText}>Necessário mínimo 10 caracteres</Text> : null}
 
         <View style={styles.buttonContainer}>
-          <Button 
-            title="Adicionar Tarefa" 
+          <Button
+            title="Adicionar Tarefa"
             color="darkgreen"
-            onPress={onMessage} 
+            onPress={onMessage}
           />
         </View>
       </View>
 
       <ScrollView style={styles.taskList}>
         {task.map((item, index) => (
-          <TaskCard 
-            key={index} 
-            title={item.title} 
-            description={item.description} 
-            status={"Done"} 
-            onClick={() => deleteTask(index)} 
+          <TaskCard
+            key={item.id}
+            title={item.title}
+            description={item.description}
+            status={"Done"}
+            onClick={() => deleteTask(index, item.id)}
           />
         ))}
       </ScrollView>
 
-      {task.length > 0 && <View style={styles.separator} />} 
+      {task.length > 0 && <View style={styles.separator} />}
     </View>
   );
 }
